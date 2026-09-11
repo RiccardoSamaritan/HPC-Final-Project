@@ -5,8 +5,13 @@ CFLAGS    ?= -O2 -Wall -Wextra -Wpedantic
 LDLIBS    ?= -lm
 PRECISION ?= double
 
+COMMON_DIR := ../../common
+
 PROGRAMS := nbody_direct_serial generate_ic
 HEADERS  := nbody_common.h
+COMMON_INCLUDES := -I$(COMMON_DIR)
+COMMON_SRCS      := $(COMMON_DIR)/profiling.c
+COMMON_HEADERS   := $(COMMON_DIR)/profiling.h
 
 ifeq ($(PRECISION),float)
 PRECISION_CPPFLAGS := -DNBODY_USE_FLOAT
@@ -20,8 +25,8 @@ endif
 
 all: $(PROGRAMS)
 
-nbody_direct_serial: nbody_direct_serial.c $(HEADERS)
-	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
+nbody_direct_serial: nbody_direct_serial.c $(HEADERS) $(COMMON_SRCS) $(COMMON_HEADERS)
+	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ nbody_direct_serial.c $(COMMON_SRCS) $(LDLIBS)
 
 generate_ic: generate_ic.c $(HEADERS)
 	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
