@@ -1,7 +1,7 @@
-# v0-naive serial baseline profiling
+# baseline serial profiling
 
 Reference wall-clock profiling for the naive serial N-body direct-summation
-kernel (`src/serial/v0-naive/nbody_direct_serial.c`), profiler enabled
+kernel (`src/serial/baseline/nbody_direct_serial.c`), profiler enabled
 (`--profiler 1`).
 
 ## Run configuration
@@ -50,5 +50,5 @@ will be compared against it to compute speedup.
 ## Runner
 
 These runs were produced by `runners/run-experiment.sh`, which can be reused
-unchanged for future variants (v1-rsqrt, v2-blocking, ...) by pointing it at
-their binary and variant name.
+unchanged for future experiments (aos-vs-soa, rsqrt, blocking, ...) by
+pointing it at their binary and variant name.
