@@ -13,6 +13,10 @@ set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
 mkdir -p log
 
+cd src/serial/experiments/aos-vs-soa
+make
+cd "$SLURM_SUBMIT_DIR"
+
 ./runners/run-experiment.sh \
     src/serial/experiments/aos-vs-soa/nbody_direct_serial \
     aos-vs-soa-soa \
