@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH --job-name=aos-vs-soa-soa
+#SBATCH --partition=GENOA
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=8G
+#SBATCH --time=00:30:00
+#SBATCH --output=log/%x_%j.out
+#SBATCH --error=log/%x_%j.err
+
+set -euo pipefail
+cd "$SLURM_SUBMIT_DIR"
+mkdir -p log
+
+./runners/run-experiment.sh \
+    src/serial/experiments/aos-vs-soa/nbody_direct_serial \
+    aos-vs-soa-soa \
+    plummer_50k.bin \
+    --nsteps 50 --dt 1e-4 --eps 0.05 --mass 1.0 --layout soa
