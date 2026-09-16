@@ -2,6 +2,7 @@ CC        ?= cc
 STD       ?= -std=c11
 CPPFLAGS  ?=
 CFLAGS    ?= -O2 -Wall -Wextra -Wpedantic
+CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
 
