@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
-#SBATCH --time=00:30:00
+#SBATCH --time=02:00:00
 #SBATCH --output=log/%x_%j.out
 #SBATCH --error=log/%x_%j.err
 
@@ -15,6 +15,7 @@ mkdir -p log
 
 cd src/serial/experiments/aos-vs-soa
 make
+./generate_ic --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k.bin"
 cd "$SLURM_SUBMIT_DIR"
 
 ./runners/run-experiment.sh \
