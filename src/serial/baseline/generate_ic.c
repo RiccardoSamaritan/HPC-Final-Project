@@ -18,7 +18,7 @@
  * stored as float32 records.
  */
 
-#include "nbody_common.h"
+#include "../../common/nbody_common.h"
 
 #include <errno.h>
 #include <stdarg.h>

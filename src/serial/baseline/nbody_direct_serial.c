@@ -29,7 +29,7 @@
  *
  */
 
-#include "nbody_common.h"
+#include "../../common/nbody_common.h"
 #include "../../common/profiling.h"
 
 #include <errno.h>

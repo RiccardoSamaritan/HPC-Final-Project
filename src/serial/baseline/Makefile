@@ -9,7 +9,7 @@ PRECISION ?= double
 COMMON_DIR := ../../common
 
 PROGRAMS := nbody_direct_serial generate_ic
-HEADERS  := nbody_common.h
+HEADERS  := $(COMMON_DIR)/nbody_common.h
 COMMON_INCLUDES := -I$(COMMON_DIR)
 COMMON_SRCS      := $(COMMON_DIR)/profiling.c
 COMMON_HEADERS   := $(COMMON_DIR)/profiling.h
@@ -30,7 +30,7 @@ nbody_direct_serial: nbody_direct_serial.c $(HEADERS) $(COMMON_SRCS) $(COMMON_HE
 	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ nbody_direct_serial.c $(COMMON_SRCS) $(LDLIBS)
 
 generate_ic: generate_ic.c $(HEADERS)
-	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
+	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
 
 
 run-smoke: all
