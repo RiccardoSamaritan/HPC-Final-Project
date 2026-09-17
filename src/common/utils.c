@@ -1,8 +1,11 @@
 #include "utils.h"
 
+#include <errno.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 void die (const char *format, ...)
 {
@@ -13,6 +16,63 @@ void die (const char *format, ...)
   va_end (args);
   fputc ('\n', stderr);
   exit (EXIT_FAILURE);
+}
+
+size_t parse_size (const char *text,     // decimal text to parse
+                   const char *name      // option name used in errors
+		   )
+{
+  char               *endptr;
+  unsigned long long  value;
+
+  errno = 0;
+  value = strtoull (text, &endptr, 10);
+  if ((errno != 0) || (endptr == text) || (*endptr != '\0'))
+    die ("invalid integer for %s: %s", name, text);
+  if (value > (unsigned long long) SIZE_MAX)
+    die ("integer for %s is too large: %s", name, text);
+
+  return (size_t) value;
+}
+
+dtype parse_dtype (const char *text,     // decimal text to parse
+                   const char *name      // option name used in errors
+		   )
+{
+  char    *endptr;
+  double   value;
+
+  errno = 0;
+  value = strtod (text, &endptr);
+  if ((errno != 0) || (endptr == text) || (*endptr != '\0') || !isfinite (value))
+    die ("invalid floating-point value for %s: %s", name, text);
+  if (fabs (value) > (double) DTYPE_MAX_VALUE)
+    die ("floating-point value for %s is outside the selected dtype range: %s", name, text);
+
+  return (dtype) value;
+}
+
+const char *option_value (int        *i,       // current argv index, updated on success
+                          int         argc,    // argc from main
+                          char      **argv,    // argv from main
+                          const char *key      // long option name, including "--"
+			  )
+{
+  const size_t  key_len = strlen (key);
+  const char   *arg     = argv[*i];
+
+  if ((strncmp (arg, key, key_len) == 0) && (arg[key_len] == '='))
+    return arg + key_len + 1;
+
+  if (strcmp (arg, key) == 0)
+    {
+      if (*i + 1 >= argc)
+        die ("missing value after %s", key);
+      *i += 1;
+      return argv[*i];
+    }
+
+  return NULL;
 }
 
 void *checked_aligned_alloc (size_t  nbytes,      // requested useful bytes

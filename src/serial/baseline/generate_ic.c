@@ -19,6 +19,7 @@
  */
 
 #include "../../common/nbody_common.h"
+#include "../../common/utils.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -49,18 +50,6 @@ typedef struct rng_s
  * ··············································································
  */
 
-static void die (const char *format, ...)
-{
-  va_list  args;
-
-  va_start (args, format);
-  vfprintf (stderr, format, args);
-  va_end (args);
-  fputc ('\n', stderr);
-  exit (EXIT_FAILURE);
-}
-
-
 static void print_usage (const char *program    // argv[0]
 			 )
 {
@@ -79,77 +68,6 @@ static void print_usage (const char *program    // argv[0]
            program, NBODY_BINARY_VERSION_TEXT);
 }
 
-
-/*
- * Parse a positive particle count or seed-like integer from the command line.
- * The function is intentionally strict so that typos in benchmark scripts do
- * not silently produce a different initial condition.
- */
-static size_t parse_size (const char *text,     // decimal text to parse
-                          const char *name      // option name used in errors
-)
-{
-  char               *endptr;
-  unsigned long long  value;
-
-  errno = 0;
-  value = strtoull (text, &endptr, 10);
-  if ((errno != 0) || (endptr == text) || (*endptr != '\0'))
-    die ("invalid integer for %s: %s", name, text);
-  if (value > (unsigned long long) SIZE_MAX)
-    die ("integer for %s is too large: %s", name, text);
-
-  return (size_t) value;
-}
-
-/*
- * Parse a finite floating-point value and cast it to dtype.  All physical
- * parameters pass through this helper before they are used to scale positions
- * or velocities.
- */
-static dtype parse_dtype (const char *text,     // decimal text to parse
-                          const char *name      // option name used in errors
-)
-{
-  char    *endptr;
-  double   value;
-
-  errno = 0;
-  value = strtod (text, &endptr);
-  if ((errno != 0) || (endptr == text) || (*endptr != '\0') || !isfinite (value))
-    die ("invalid floating-point value for %s: %s", name, text);
-  if (fabs (value) > (double) DTYPE_MAX_VALUE)
-    die ("floating-point value for %s is outside the selected dtype range: %s", name, text);
-
-  return (dtype) value;
-}
-
-/*
- * Extract either --key=value or --key value from argv.  This avoids depending on
- * POSIX getopt while still keeping the interface readable in batch scripts.
- */
-static const char *option_value (int        *i,       // current argv index, updated on success
-                                 int         argc,    // argc from main
-                                 char      **argv,    // argv from main
-                                 const char *key      // long option name, including "--"
-)
-{
-  const size_t  key_len = strlen (key);
-  const char   *arg     = argv[*i];
-
-  if ((strncmp (arg, key, key_len) == 0) && (arg[key_len] == '='))
-    return arg + key_len + 1;
-
-  if (strcmp (arg, key) == 0)
-    {
-      if (*i + 1 >= argc)
-        die ("missing value after %s", key);
-      *i += 1;
-      return argv[*i];
-    }
-
-  return NULL;
-}
 
 /*
  * Allocate aligned storage for generated coordinates.  The generator writes a
@@ -175,22 +93,6 @@ static dtype *allocate_array (size_t      n,       // number of dtype values
     die ("allocation failed for array %s", name);
 
   return ptr;
-}
-
-/*
- * Write exactly nmemb items to a binary stream.
- */
-static void checked_fwrite (const void *ptr,       // source buffer
-                            size_t      size,      // item size in bytes
-                            size_t      nmemb,     // number of items to write
-                            FILE       *fp,        // open output stream
-                            const char *path,      // file name for diagnostics
-                            const char *what       // logical record name
-			    )
-{
-  const size_t  written = fwrite (ptr, size, nmemb, fp);
-  if (written != nmemb)
-    die ("write error while writing %s to '%s'", what, path);
 }
 
 
