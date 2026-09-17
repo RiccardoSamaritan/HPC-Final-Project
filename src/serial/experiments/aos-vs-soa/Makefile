@@ -9,10 +9,12 @@ PRECISION ?= double
 COMMON_DIR := ../../../common
 
 PROGRAMS := nbody_direct_serial generate_ic
-HEADERS  := nbody_common.h
+HEADERS  := $(COMMON_DIR)/nbody_common.h
 COMMON_INCLUDES := -I$(COMMON_DIR)
-COMMON_SRCS      := $(COMMON_DIR)/profiling.c
-COMMON_HEADERS   := $(COMMON_DIR)/profiling.h
+COMMON_SRCS      := $(COMMON_DIR)/profiling.c $(COMMON_DIR)/particles.c $(COMMON_DIR)/utils.c
+COMMON_HEADERS   := $(COMMON_DIR)/profiling.h $(COMMON_DIR)/particles.h $(COMMON_DIR)/utils.h
+UTILS_SRCS       := $(COMMON_DIR)/utils.c
+UTILS_HEADERS    := $(COMMON_DIR)/utils.h
 
 ifeq ($(PRECISION),float)
 PRECISION_CPPFLAGS := -DNBODY_USE_FLOAT
@@ -29,8 +31,8 @@ all: $(PROGRAMS)
 nbody_direct_serial: nbody_direct_serial.c $(HEADERS) $(COMMON_SRCS) $(COMMON_HEADERS)
 	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ nbody_direct_serial.c $(COMMON_SRCS) $(LDLIBS)
 
-generate_ic: generate_ic.c $(HEADERS)
-	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
+generate_ic: $(COMMON_DIR)/generate_ic.c $(HEADERS) $(UTILS_SRCS) $(UTILS_HEADERS)
+	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $(COMMON_DIR)/generate_ic.c $(UTILS_SRCS) $(LDLIBS)
 
 
 run-smoke: all
