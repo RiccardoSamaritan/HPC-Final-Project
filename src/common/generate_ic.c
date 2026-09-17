@@ -18,8 +18,8 @@
  * stored as float32 records.
  */
 
-#include "../../common/nbody_common.h"
-#include "../../common/utils.h"
+#include "nbody_common.h"
+#include "utils.h"
 
 #include <errno.h>
 #include <stdarg.h>

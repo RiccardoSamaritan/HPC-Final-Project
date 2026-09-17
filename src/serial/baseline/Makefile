@@ -31,8 +31,8 @@ all: $(PROGRAMS)
 nbody_direct_serial: nbody_direct_serial.c $(HEADERS) $(COMMON_SRCS) $(COMMON_HEADERS)
 	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ nbody_direct_serial.c $(COMMON_SRCS) $(LDLIBS)
 
-generate_ic: generate_ic.c $(HEADERS) $(UTILS_SRCS) $(UTILS_HEADERS)
-	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ generate_ic.c $(UTILS_SRCS) $(LDLIBS)
+generate_ic: $(COMMON_DIR)/generate_ic.c $(HEADERS) $(UTILS_SRCS) $(UTILS_HEADERS)
+	$(CC) $(STD) $(CPPFLAGS) $(COMMON_INCLUDES) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $(COMMON_DIR)/generate_ic.c $(UTILS_SRCS) $(LDLIBS)
 
 
 run-smoke: all
