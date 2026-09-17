@@ -1,0 +1,19 @@
+# serial direct N-body DKD baseline (layout=soa)
+# arithmetic_dtype=double binary_storage=float32 format=nbody-f32-v1
+# N=50000 nsteps=50 dt=0.0001 eps=0.050000000000000003 G=1 mass=1
+# step time kinetic potential total rel_energy_drift
+0 0 366701859.8791694 -732114869.15840733 -365413009.27923793 0
+50 0.0050000000000000001 363023077.33884454 -728435951.43241787 -365412874.09357333 3.699530699818859e-07
+# final: N=50000 steps=50 arithmetic_dtype=double layout=soa max_relative_energy_drift=3.699530699818859e-07 tolerance=0.001 status=OK
+
+--- profiling report ---
+file read      : 1.458000e-03 s
+file write     : 0.000000e+00 s
+initial energy : 4.065641e+00 s
+
+--- per-step phases (50 steps) ---
+total step     median=4.180555e+00 s  trimmed_mean=4.189023e+00 s  std=1.655416e-02 s
+first drift    median=8.039130e-05 s  trimmed_mean=8.042392e-05 s  std=2.475666e-07 s
+force          median=4.180294e+00 s  trimmed_mean=4.188761e+00 s  std=1.655415e-02 s
+kick           median=9.868573e-05 s  trimmed_mean=9.939652e-05 s  std=1.667479e-06 s
+second drift   median=8.041132e-05 s  trimmed_mean=8.057361e-05 s  std=4.084360e-07 s
