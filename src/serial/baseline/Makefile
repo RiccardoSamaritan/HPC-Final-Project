@@ -1,7 +1,7 @@
 CC        ?= cc
 STD       ?= -std=c11
 CPPFLAGS  ?=
-CFLAGS    ?= -O3 -march=native -flto -Wall -Wextra -Wpedantic
+CFLAGS    ?= -O3 -march=native -flto -ffast-math -Wall -Wextra -Wpedantic
 CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
