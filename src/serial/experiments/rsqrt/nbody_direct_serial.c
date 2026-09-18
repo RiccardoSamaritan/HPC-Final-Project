@@ -114,16 +114,16 @@ static inline dtype dtype_rsqrt (dtype x)
   return y;
 }
 
-static void compute_accelerations_rsqrt (size_t  n,          // number of particles
-                                         dtype   g,          // gravitational constant
-                                         dtype   mass,       // mass of every source particle
-                                         dtype   eps,        // Plummer softening length
-                                         dtype * x,          // x positions, read-only
-                                         dtype * y,          // y positions, read-only
-                                         dtype * z,          // z positions, read-only
-                                         dtype * ax,         // x acceleration, overwritten
-                                         dtype * ay,         // y acceleration, overwritten
-                                         dtype * az          // z acceleration, overwritten
+static void compute_accelerations_rsqrt (size_t              n,          // number of particles
+                                         dtype                g,          // gravitational constant
+                                         dtype                mass,       // mass of every source particle
+                                         dtype                eps,        // Plummer softening length
+                                         const dtype * restrict x,        // x positions, read-only
+                                         const dtype * restrict y,        // y positions, read-only
+                                         const dtype * restrict z,        // z positions, read-only
+                                         dtype       * restrict ax,       // x acceleration, overwritten
+                                         dtype       * restrict ay,       // y acceleration, overwritten
+                                         dtype       * restrict az        // z acceleration, overwritten
 					 )
 {
   const dtype  eps2 = eps * eps;
