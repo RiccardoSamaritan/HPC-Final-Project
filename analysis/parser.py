@@ -10,6 +10,8 @@ per line, one line per simulation step.
 
 from __future__ import annotations
 
+import argparse
+import csv
 import glob
 import os
 import sys
@@ -219,16 +221,67 @@ def load_all_experiments(
     return experiments
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print(
-            f"usage: {sys.argv[0]} <baseline_dir> <dir> [<dir> ...]",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+def _status(exp: Experiment) -> str:
+    tol = exp.config.get("energy_tolerance")
+    return "OK" if (tol is not None and exp.max_relative_energy_drift <= tol) else "?"
 
-    dirs = sys.argv[1:]
-    experiments = load_all_experiments(dirs)
+
+def _write_csv(experiments: list[Experiment], path: str) -> None:
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                "name",
+                "trimmed_mean_force_time",
+                "std_force_time",
+                "speedup",
+                "speedup_err",
+                "max_relative_energy_drift",
+                "status",
+            ]
+        )
+        for exp in experiments:
+            writer.writerow(
+                [
+                    exp.name,
+                    exp.trimmed_mean_force_time,
+                    exp.trimmed_std_force_time,
+                    exp.speedup,
+                    exp.speedup_err,
+                    exp.max_relative_energy_drift,
+                    _status(exp),
+                ]
+            )
+
+
+def _write_markdown(experiments: list[Experiment], path: str) -> None:
+    lines = [
+        "| name | trimmed_mean_force_time (s) | std (s) | speedup | max_relative_energy_drift | status |",
+        "|---|---|---|---|---|---|",
+    ]
+    for exp in experiments:
+        lines.append(
+            f"| {exp.name} | {exp.trimmed_mean_force_time:.6e} | "
+            f"{exp.trimmed_std_force_time:.3e} | {exp.speedup:.4f} ± {exp.speedup_err:.4f} | "
+            f"{exp.max_relative_energy_drift:.4e} | {_status(exp)} |"
+        )
+    with open(path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        description="Parse aos-vs-soa-style profiling directories and report force-time speedups."
+    )
+    arg_parser.add_argument("dirs", nargs="+", help="data/raw/<variant> directories; first is the baseline")
+    arg_parser.add_argument("--csv", metavar="PATH", help="write the results table as CSV to PATH")
+    arg_parser.add_argument("--markdown", metavar="PATH", help="write the results table as Markdown to PATH")
+    args = arg_parser.parse_args()
+
+    if len(args.dirs) < 2:
+        arg_parser.error("at least two directories are required (baseline_dir + dir ...)")
+
+    experiments = load_all_experiments(args.dirs)
 
     header = (
         f"{'name':<24} {'trimmed_mean_force(s)':>22} {'std(s)':>12} "
@@ -237,10 +290,13 @@ if __name__ == "__main__":
     print(header)
     print("-" * len(header))
     for exp in experiments:
-        tol = exp.config.get("energy_tolerance")
-        status = "OK" if (tol is not None and exp.max_relative_energy_drift <= tol) else "?"
         print(
             f"{exp.name:<24} {exp.trimmed_mean_force_time:>22.6e} "
             f"{exp.trimmed_std_force_time:>12.3e} {exp.speedup:>10.4f} "
-            f"{exp.speedup_err:>12.4f} {exp.max_relative_energy_drift:>14.4e} {status:>8}"
+            f"{exp.speedup_err:>12.4f} {exp.max_relative_energy_drift:>14.4e} {_status(exp):>8}"
         )
+
+    if args.csv:
+        _write_csv(experiments, args.csv)
+    if args.markdown:
+        _write_markdown(experiments, args.markdown)
