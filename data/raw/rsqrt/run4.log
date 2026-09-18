@@ -2,18 +2,18 @@
 # arithmetic_dtype=double binary_storage=float32 format=nbody-f32-v1
 # N=50000 nsteps=50 dt=0.0001 eps=0.050000000000000003 G=1 mass=1
 # step time kinetic potential total rel_energy_drift
-0 0 366701859.8791694 -732114869.15840733 -365413009.27923793 0
-50 0.0050000000000000001 362748994.20601821 -728150755.93784595 -365401761.73182774 3.0780369402762719e-05
-# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=3.0780369402762719e-05 tolerance=0.001 status=OK
+0 0 366701859.8791694 -732114869.15914667 -365413009.27997726 0
+50 0.0050000000000000001 362748994.20715791 -728150755.93972945 -365401761.73257154 3.0780369390466755e-05
+# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=3.0780369390466755e-05 tolerance=0.001 status=OK
 
 --- profiling report ---
-file read      : 1.575968e-03 s
+file read      : 1.434929e-03 s
 file write     : 0.000000e+00 s
-initial energy : 4.073165e+00 s
+initial energy : 4.151519e+00 s
 
 --- per-step phases (50 steps) ---
-total step     median=3.802973e+00 s  trimmed_mean=3.803037e+00 s  std=4.918571e-04 s
-first drift    median=7.403549e-05 s  trimmed_mean=7.403949e-05 s  std=1.876801e-07 s
-force          median=3.802715e+00 s  trimmed_mean=3.802791e+00 s  std=4.927502e-04 s
-kick           median=9.384612e-05 s  trimmed_mean=9.413045e-05 s  std=1.384540e-06 s
-second drift   median=7.558614e-05 s  trimmed_mean=7.558556e-05 s  std=2.059875e-07 s
+total step     median=1.203490e+00 s  trimmed_mean=1.203557e+00 s  std=1.567414e-03 s
+first drift    median=4.484039e-05 s  trimmed_mean=4.480444e-05 s  std=1.897327e-07 s
+force          median=1.203338e+00 s  trimmed_mean=1.203403e+00 s  std=1.566145e-03 s
+kick           median=6.141048e-05 s  trimmed_mean=6.181560e-05 s  std=1.907488e-06 s
+second drift   median=4.490651e-05 s  trimmed_mean=4.520046e-05 s  std=1.652385e-06 s
