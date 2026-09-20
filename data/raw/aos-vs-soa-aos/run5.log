@@ -7,13 +7,13 @@
 # final: N=50000 steps=50 arithmetic_dtype=double layout=aos max_relative_energy_drift=3.699530699818859e-07 tolerance=0.001 status=OK
 
 --- profiling report ---
-file read      : 1.916623e-03 s
+file read      : 1.873040e-03 s
 file write     : 0.000000e+00 s
-initial energy : 7.272730e+00 s
+initial energy : 7.358011e+00 s
 
 --- per-step phases (50 steps) ---
-total step     median=9.747901e+00 s  trimmed_mean=9.778920e+00 s  std=3.828860e-02 s
-first drift    median=4.123105e-05 s  trimmed_mean=4.133668e-05 s  std=7.133773e-07 s
-force          median=9.747780e+00 s  trimmed_mean=9.778797e+00 s  std=3.828991e-02 s
-kick           median=3.955048e-05 s  trimmed_mean=3.955003e-05 s  std=1.336057e-07 s
-second drift   median=4.032021e-05 s  trimmed_mean=4.041053e-05 s  std=2.637182e-07 s
+total step     median=9.970299e+00 s  trimmed_mean=9.970205e+00 s  std=5.208539e-03 s
+first drift    median=4.254561e-05 s  trimmed_mean=4.262226e-05 s  std=5.645467e-07 s
+force          median=9.970174e+00 s  trimmed_mean=9.970080e+00 s  std=5.208844e-03 s
+kick           median=4.039053e-05 s  trimmed_mean=4.041602e-05 s  std=1.350600e-07 s
+second drift   median=4.148576e-05 s  trimmed_mean=4.154542e-05 s  std=2.063548e-07 s
