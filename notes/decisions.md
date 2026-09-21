@@ -23,3 +23,57 @@ This confirms the blocker was never pointer aliasing (which restrict
 would have solved) — it's IEEE FP-reduction ordering.
 
 -ffast-math is a necessary condition for vectorizing this reduction pattern with the current loop structure.
+
+### Isolated measurement
+
+Before deciding whether to adopt -ffast-math permanently, I measured its
+effect in isolation: same source, same -O3 -march=native -flto build,
+only -ffast-math added via a one-off compile (Makefile left unchanged),
+tested against the aos-vs-soa SoA kernel. 5 repetitions each, N=50000,
+50 steps, GENOA partition, compared via analysis/parser.py.
+
+| Build                | force trimmed_mean (s) | std      |
+|-----------------------|------------------------|----------|
+| without -ffast-math   | 4.2129                 | 0.0316   |
+| with -ffast-math       | 1.9163                 | 0.0299   |
+
+Speedup: 2.198x ± 0.038 — close to the ~2.5x reported by the reference
+project (Savorgnan) for the same flag on their kernels, confirming
+-ffast-math (not restrict) is the dominant factor behind the earlier gap
+between our AoS-vs-SoA speedup (~2.30x, without -ffast-math) and theirs
+(~4.3x, with -ffast-math already included in their default build flags).
+
+Energy drift impact: negligible. A single-run correctness check
+(N=128, 10 steps) showed max_relative_energy_drift changing from
+4.4164728144891537e-06 to 4.4164728095902277e-06 — a relative
+difference on the order of 1e-9, several orders of magnitude below the
+1e-3 tolerance and below the drift itself. Every intermediate step's
+kinetic/potential/total energy differed only in the last 1-2
+significant digits, consistent with ordinary floating-point reordering
+noise, not a correctness regression.
+
+### Decision: adopted permanently
+
+Given the large, reproducible speedup and the negligible impact on
+correctness, -ffast-math was added permanently to all three Makefiles
+(baseline, rsqrt, aos-vs-soa), alongside the existing -O3 -march=native
+-flto -D_POSIX_C_SOURCE=199309L flags. This reverses the earlier
+deliberate choice to exclude it (made before the isolated measurement
+was available).
+
+Consequence: all previously-collected "official" Orfeo results (baseline,
+rsqrt, aos-vs-soa-aos, aos-vs-soa-soa) were re-run under the final build
+configuration (restrict/const/static + -O3 -march=native -flto
+-ffast-math) to keep every experiment comparable on the same basis going
+forward. The pre-ffast-math results were preserved as a separate,
+explicitly-labelled archive (data/raw/*-no-ffastmath/) rather than
+discarded, since they remain a valid, documented data point (the
+counter-intuitive -O2 AoS-vs-SoA result, and the isolated flag
+comparison above, both rely on having that earlier configuration
+preserved for comparison).
+
+Going forward, -ffast-math is part of the standard build for every new
+serial experiment (blocking, Newton's third law, loop unrolling),
+rather than being re-isolated each time — it is now treated as part of
+the project's baseline compiler configuration, not as a variable under
+test in later experiments.
