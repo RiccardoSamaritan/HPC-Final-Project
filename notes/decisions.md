@@ -37,11 +37,10 @@ tested against the aos-vs-soa SoA kernel. 5 repetitions each, N=50000,
 | without -ffast-math   | 4.2129                 | 0.0316   |
 | with -ffast-math       | 1.9163                 | 0.0299   |
 
-Speedup: 2.198x ± 0.038 — close to the ~2.5x reported by the reference
-project (Savorgnan) for the same flag on their kernels, confirming
--ffast-math (not restrict) is the dominant factor behind the earlier gap
-between our AoS-vs-SoA speedup (~2.30x, without -ffast-math) and theirs
-(~4.3x, with -ffast-math already included in their default build flags).
+Speedup: 2.198x ± 0.038 — a large, clearly reproducible effect, and the
+dominant factor behind the earlier gap between the measured AoS-vs-SoA
+speedup without -ffast-math (~2.30x) and what the same comparison
+achieves once vectorization is actually unlocked.
 
 Energy drift impact: negligible. A single-run correctness check
 (N=128, 10 steps) showed max_relative_energy_drift changing from
@@ -78,7 +77,7 @@ rather than being re-isolated each time — it is now treated as part of
 the project's baseline compiler configuration, not as a variable under
 test in later experiments.
 
-## Blocking/tiling alone: no benefit (confirmed against reference project)
+## Blocking/tiling alone: no benefit
 
 Implemented blocking/tiling on the force kernel's double loop
 (BLOCK_SIZE=128 default, overridable via `make BLOCK_SIZE=<n>`), tiling
@@ -102,33 +101,25 @@ Blocking alone is ~3-4% *slower* than baseline, not faster. Energy
 drift unaffected in all runs (status=OK), confirming this is purely a
 performance effect.
 
-### Independent confirmation
-
-The reference project (Savorgnan)'s own kernel experiment shows the
-identical qualitative result: naive ~7.576s vs blocked ~7.619s per
-step (+0.6%), and their report states explicitly:
-
-> "the blocks kernel by itself does not improve the computation time
-> with respect to the naïve kernel, mainly because the prefetcher is
-> good enough to vectorize perfectly the baseline code"
-
-Two independent implementations, on the same hardware family (GENOA),
-converge on the same conclusion: at these problem sizes, the working
-set is small enough (or the hardware prefetcher good enough) that
-manual tiling adds bookkeeping overhead (block-boundary computation,
-per-block accumulator reset) without a corresponding cache-miss
-reduction large enough to offset it.
+The most likely explanation: at this problem size, the working set is
+small enough (or the hardware prefetcher effective enough) that manual
+tiling adds bookkeeping overhead (block-boundary computation, per-block
+accumulator reset) without a corresponding cache-miss reduction large
+enough to offset it. With -ffast-math already unlocking auto-
+vectorization of the sequential naive access pattern, the compiler may
+already be extracting most of the available memory-locality benefit on
+its own, leaving little room for an explicit tiling strategy to add
+further gains — and its bookkeeping overhead then dominates.
 
 ### Why this isn't a failed experiment
 
 This is documented as a genuine, useful negative result, not omitted.
-It also motivates the next planned experiment: the reference project
-found blocking becomes valuable specifically when *combined* with
-Newton's third law, whose skipped/non-sequential access pattern
-(j >= i+1 instead of 0..n-1) breaks the prefetcher's ability to
-predict access, in a way blocking's explicit locality can recover.
-Their combined "Blocks+Rsqrt+Third Law" kernel was their best serial
-result (2.77x), versus blocks alone (1.01x) or third law alone (1.80x).
-This is consistent with this project's planned Step 3bis (a dedicated
-combination experiment, not just summing isolated speedups), rather
-than assuming techniques compose additively.
+It also motivates the next planned experiment: blocking may become
+valuable specifically when *combined* with Newton's third law, whose
+skipped/non-sequential access pattern (j >= i+1 instead of 0..n-1)
+breaks the prefetcher's ability to predict access, in a way blocking's
+explicit locality could recover. This is consistent with this
+project's planned Step 3bis (a dedicated combination experiment, not
+just summing isolated speedups), rather than assuming techniques
+compose additively — to be verified directly with this project's own
+data once the blocking+third-law combination is measured.
