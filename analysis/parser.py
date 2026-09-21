@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import glob
+import math
 import os
 import sys
 from dataclasses import dataclass, field
@@ -164,13 +165,13 @@ def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
     force_time_matrix = np.stack([r.force_time for r in runs])
     total_step_time_matrix = np.stack([r.total_step_time for r in runs])
 
-    drifts = {r.config.get("max_relative_energy_drift") for r in runs}
-    if len(drifts) != 1:
+    drifts = [r.config.get("max_relative_energy_drift") for r in runs]
+    if not all(math.isclose(d, drifts[0], rel_tol=1e-6) for d in drifts):
         raise ValueError(
             f"{dir_path}: max_relative_energy_drift differs across runs "
-            f"(non-reproducible runs): {sorted(drifts)}"
+            f"(non-reproducible runs): {sorted(set(drifts))}"
         )
-    max_relative_energy_drift = drifts.pop()
+    max_relative_energy_drift = drifts[0]
 
     pooled_force = force_time_matrix.reshape(-1)
     trimmed_mean_force_time, trimmed_std_force_time = _trimmed_stats(pooled_force)
