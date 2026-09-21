@@ -77,3 +77,58 @@ serial experiment (blocking, Newton's third law, loop unrolling),
 rather than being re-isolated each time — it is now treated as part of
 the project's baseline compiler configuration, not as a variable under
 test in later experiments.
+
+## Blocking/tiling alone: no benefit (confirmed against reference project)
+
+Implemented blocking/tiling on the force kernel's double loop
+(BLOCK_SIZE=128 default, overridable via `make BLOCK_SIZE=<n>`), tiling
+both the i and j loops so that a block of source particles is reused
+across a block of target particles before moving to the next source
+block. Accumulation order across j is unchanged from the naive kernel
+(still strictly 0..n-1 per i, just grouped into blocks), so this is a
+pure memory-access-pattern change, not a numerical one.
+
+### Result
+
+5 repetitions each, N=50000, 50 steps, GENOA partition, same build as
+baseline (-restrict -O3 -march=native -flto -ffast-math):
+
+| Kernel   | total_step median (s) |
+|----------|------------------------|
+| baseline | ~1.91                  |
+| blocking | ~1.97-1.99             |
+
+Blocking alone is ~3-4% *slower* than baseline, not faster. Energy
+drift unaffected in all runs (status=OK), confirming this is purely a
+performance effect.
+
+### Independent confirmation
+
+The reference project (Savorgnan)'s own kernel experiment shows the
+identical qualitative result: naive ~7.576s vs blocked ~7.619s per
+step (+0.6%), and their report states explicitly:
+
+> "the blocks kernel by itself does not improve the computation time
+> with respect to the naïve kernel, mainly because the prefetcher is
+> good enough to vectorize perfectly the baseline code"
+
+Two independent implementations, on the same hardware family (GENOA),
+converge on the same conclusion: at these problem sizes, the working
+set is small enough (or the hardware prefetcher good enough) that
+manual tiling adds bookkeeping overhead (block-boundary computation,
+per-block accumulator reset) without a corresponding cache-miss
+reduction large enough to offset it.
+
+### Why this isn't a failed experiment
+
+This is documented as a genuine, useful negative result, not omitted.
+It also motivates the next planned experiment: the reference project
+found blocking becomes valuable specifically when *combined* with
+Newton's third law, whose skipped/non-sequential access pattern
+(j >= i+1 instead of 0..n-1) breaks the prefetcher's ability to
+predict access, in a way blocking's explicit locality can recover.
+Their combined "Blocks+Rsqrt+Third Law" kernel was their best serial
+result (2.77x), versus blocks alone (1.01x) or third law alone (1.80x).
+This is consistent with this project's planned Step 3bis (a dedicated
+combination experiment, not just summing isolated speedups), rather
+than assuming techniques compose additively.
