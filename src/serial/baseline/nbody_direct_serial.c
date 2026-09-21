@@ -374,6 +374,8 @@ static void print_usage (const char *program    // argv[0]
 
 int main (int argc, char **argv)
 {
+  const double  t_program_start = get_time ();
+
   const char  *input_path    = NULL;
   const char  *output_path   = NULL;
   size_t       nsteps        = 10u;
@@ -564,6 +566,8 @@ int main (int argc, char **argv)
 
   if (profiler_on)
     {
+      profiler.total_run_time = get_time () - t_program_start;
+
       print_statistics (&profiler);
 
       if (profiler_path != NULL)

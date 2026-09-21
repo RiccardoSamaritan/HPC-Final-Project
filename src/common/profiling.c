@@ -45,6 +45,7 @@ void profiler_allocate (profiler_t *profiler,
   profiler->reading_time        = 0.0;
   profiler->writing_time        = 0.0;
   profiler->initial_energy_time = 0.0;
+  profiler->total_run_time      = 0.0;
 
   profiler->n_steps           = n_steps;
   profiler->first_drift_time  = profiling_alloc_doubles (n_steps);
@@ -156,6 +157,7 @@ void print_statistics (const profiler_t *profiler)
   printf ("%-14s : %.6e s\n", "file read",      profiler->reading_time);
   printf ("%-14s : %.6e s\n", "file write",     profiler->writing_time);
   printf ("%-14s : %.6e s\n", "initial energy", profiler->initial_energy_time);
+  printf ("%-14s : %.6e s\n", "total run",      profiler->total_run_time);
 
   printf ("\n--- per-step phases (%zu steps) ---\n", profiler->n_steps);
   print_phase ("total step",   profiler->total_step_time,   profiler->n_steps);
@@ -205,6 +207,7 @@ void save_statistics (const char              *path,
   fprintf (fp, "reading_time=%.9e\n",        profiler->reading_time);
   fprintf (fp, "writing_time=%.9e\n",        profiler->writing_time);
   fprintf (fp, "initial_energy_time=%.9e\n", profiler->initial_energy_time);
+  fprintf (fp, "total_run_time=%.9e\n",      profiler->total_run_time);
   fprintf (fp, "\n");
 
   save_phase (fp, "total_step",   profiler->total_step_time,   profiler->n_steps);

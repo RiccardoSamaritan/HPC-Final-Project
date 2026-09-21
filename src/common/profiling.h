@@ -35,6 +35,14 @@ typedef struct profiler_s
   double   writing_time;
   double   initial_energy_time;
 
+  /*
+   * Whole-program wall-clock time, from just after entering main() to just
+   * before returning — distinct from total_step_time, which only sums the
+   * per-step leapfrog phases and misses overhead like CLI parsing or the
+   * initial memory allocations.
+   */
+  double   total_run_time;
+
   // Per-step measurements, one entry per simulation step
   size_t   n_steps;
   double  *first_drift_time;
