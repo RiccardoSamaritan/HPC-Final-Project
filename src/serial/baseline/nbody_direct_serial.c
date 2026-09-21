@@ -211,38 +211,38 @@ static void leapfrog_dkd_step (particles_t *p,          // complete particle sta
   double  t0;
   double  t1;
 
-  if (profiler != NULL) t0 = get_time ();
-  drift (p, (dtype) 0.5 * dt);
   if (profiler != NULL)
     {
+      t0 = get_time ();
+      drift (p, (dtype) 0.5 * dt);
       t1 = get_time ();
       profiler->first_drift_time[step_idx] = t1 - t0;
       t0 = t1;
-    }
 
-  compute_accelerations_naive (p->n, g, p->mass, eps,
-                               p->x, p->y, p->z,
-                               p->ax, p->ay, p->az);
-  if (profiler != NULL)
-    {
+      compute_accelerations_naive (p->n, g, p->mass, eps,
+                                   p->x, p->y, p->z,
+                                   p->ax, p->ay, p->az);
       t1 = get_time ();
       profiler->force_time[step_idx] = t1 - t0;
       t0 = t1;
-    }
 
-  kick (p, dt);
-  if (profiler != NULL)
-    {
+      kick (p, dt);
       t1 = get_time ();
       profiler->kick_time[step_idx] = t1 - t0;
       t0 = t1;
-    }
 
-  drift (p, (dtype) 0.5 * dt);
-  if (profiler != NULL)
-    {
+      drift (p, (dtype) 0.5 * dt);
       t1 = get_time ();
       profiler->second_drift_time[step_idx] = t1 - t0;
+    }
+  else
+    {
+      drift (p, (dtype) 0.5 * dt);
+      compute_accelerations_naive (p->n, g, p->mass, eps,
+                                   p->x, p->y, p->z,
+                                   p->ax, p->ay, p->az);
+      kick (p, dt);
+      drift (p, (dtype) 0.5 * dt);
     }
 }
 
@@ -570,7 +570,7 @@ int main (int argc, char **argv)
         {
           profiler_config_t  config;
 
-          config.variant_name              = "v0-naive";
+          config.variant_name              = "baseline";
           config.n_particles                = particles.n;
           config.n_steps                    = nsteps;
           config.dt                         = (double) dt;
