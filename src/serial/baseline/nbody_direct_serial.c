@@ -219,9 +219,15 @@ static void leapfrog_dkd_step (particles_t *p,          // complete particle sta
       profiler->first_drift_time[step_idx] = t1 - t0;
       t0 = t1;
 
+#ifdef USE_PAPI
+      profiler_papi_start (profiler);
+#endif
       compute_accelerations_naive (p->n, g, p->mass, eps,
                                    p->x, p->y, p->z,
                                    p->ax, p->ay, p->az);
+#ifdef USE_PAPI
+      profiler_papi_stop (profiler, step_idx);
+#endif
       t1 = get_time ();
       profiler->force_time[step_idx] = t1 - t0;
       t0 = t1;
@@ -465,6 +471,10 @@ int main (int argc, char **argv)
   // set up profiling, if requested
   if (profiler_on)
     profiler_allocate (&profiler, nsteps);
+#ifdef USE_PAPI
+  if (profiler_on)
+    profiler_papi_init (&profiler);
+#endif
 
   // ························································
   // read particles from input file
@@ -534,6 +544,11 @@ int main (int argc, char **argv)
                     (double) potential, (double) energy, rel);
         }
     }
+
+#ifdef USE_PAPI
+  if (profiler_on)
+    profiler_papi_free (&profiler);
+#endif
 
   // ························································
   // write final file

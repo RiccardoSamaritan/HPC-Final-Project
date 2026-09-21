@@ -6,6 +6,12 @@ CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
 
+USE_PAPI  ?= 0
+ifeq ($(USE_PAPI),1)
+CFLAGS    += -DUSE_PAPI -I$(HOME)/local/papi/include
+LDLIBS    += -L$(HOME)/local/papi/lib -lpapi
+endif
+
 COMMON_DIR := ../../../common
 
 PROGRAMS := nbody_direct_serial generate_ic
