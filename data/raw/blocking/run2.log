@@ -1,0 +1,19 @@
+# serial direct N-body DKD blocking
+# arithmetic_dtype=double binary_storage=float32 format=nbody-f32-v1
+# N=50000 nsteps=50 dt=0.0001 eps=0.050000000000000003 G=1 mass=1
+# step time kinetic potential total rel_energy_drift
+0 0 366701859.8791694 -732114869.15914667 -365413009.27997726 0
+50 0.0050000000000000001 363023077.33999175 -728435951.43430436 -365412874.09431261 3.6995307014425317e-07
+# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=3.6995307014425317e-07 tolerance=0.001 status=OK
+
+--- profiling report ---
+file read      : 4.136506e-03 s
+file write     : 0.000000e+00 s
+initial energy : 4.124167e+00 s
+
+--- per-step phases (50 steps) ---
+total step     median=1.969768e+00 s  trimmed_mean=1.969016e+00 s  std=5.641946e-03 s
+first drift    median=4.416611e-05 s  trimmed_mean=4.430015e-05 s  std=3.774218e-07 s
+force          median=1.969612e+00 s  trimmed_mean=1.968859e+00 s  std=5.644049e-03 s
+kick           median=6.583566e-05 s  trimmed_mean=6.533456e-05 s  std=1.621769e-06 s
+second drift   median=4.579592e-05 s  trimmed_mean=4.604808e-05 s  std=8.502217e-07 s
