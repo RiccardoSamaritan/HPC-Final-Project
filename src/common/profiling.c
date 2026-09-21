@@ -60,7 +60,6 @@ void profiler_allocate (profiler_t *profiler,
   profiler->papi_instructions = malloc (n_steps * sizeof (long long));
   profiler->papi_l1_dcm       = malloc (n_steps * sizeof (long long));
   profiler->papi_l2_dcm       = malloc (n_steps * sizeof (long long));
-  profiler->papi_fma_ins      = malloc (n_steps * sizeof (long long));
 #endif
 }
 
@@ -78,7 +77,6 @@ void profiler_free (profiler_t *profiler)
   free (profiler->papi_instructions);
   free (profiler->papi_l1_dcm);
   free (profiler->papi_l2_dcm);
-  free (profiler->papi_fma_ins);
 #endif
 }
 
@@ -214,7 +212,6 @@ void print_statistics (const profiler_t *profiler)
   print_papi_counter ("instructions", profiler->papi_instructions, profiler->n_steps);
   print_papi_counter ("L1 dcm",       profiler->papi_l1_dcm,       profiler->n_steps);
   print_papi_counter ("L2 dcm",       profiler->papi_l2_dcm,       profiler->n_steps);
-  print_papi_counter ("FMA ins",      profiler->papi_fma_ins,      profiler->n_steps);
 
   {
     const double  mean_cycles = papi_mean (profiler->papi_cycles,       profiler->n_steps);
@@ -296,7 +293,6 @@ void save_statistics (const char              *path,
   save_papi_counter (fp, "papi_instructions", profiler->papi_instructions, profiler->n_steps);
   save_papi_counter (fp, "papi_l1_dcm",       profiler->papi_l1_dcm,       profiler->n_steps);
   save_papi_counter (fp, "papi_l2_dcm",       profiler->papi_l2_dcm,       profiler->n_steps);
-  save_papi_counter (fp, "papi_fma_ins",      profiler->papi_fma_ins,      profiler->n_steps);
 #endif
 
   if (fclose (fp) != 0)
@@ -325,8 +321,6 @@ void profiler_papi_init (profiler_t *profiler)
     profiling_die ("PAPI_add_event failed for PAPI_L1_DCM", NULL);
   if (PAPI_add_event (profiler->papi_eventset, PAPI_L2_DCM) != PAPI_OK)
     profiling_die ("PAPI_add_event failed for PAPI_L2_DCM", NULL);
-  if (PAPI_add_event (profiler->papi_eventset, PAPI_FMA_INS) != PAPI_OK)
-    profiling_die ("PAPI_add_event failed for PAPI_FMA_INS", NULL);
 }
 
 
@@ -349,7 +343,6 @@ void profiler_papi_stop (profiler_t *profiler,
   profiler->papi_instructions[step] = values[1];
   profiler->papi_l1_dcm[step]       = values[2];
   profiler->papi_l2_dcm[step]       = values[3];
-  profiler->papi_fma_ins[step]      = values[4];
 }
 
 

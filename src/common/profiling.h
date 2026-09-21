@@ -24,7 +24,7 @@
 
 #ifdef USE_PAPI
 #include <papi.h>
-#define PROFILING_PAPI_EVENTS_COUNT 5
+#define PROFILING_PAPI_EVENTS_COUNT 4
 #endif
 
 
@@ -59,7 +59,6 @@ typedef struct profiler_s
   long long *papi_instructions;
   long long *papi_l1_dcm;
   long long *papi_l2_dcm;
-  long long *papi_fma_ins;     // PAPI_FMA_INS: fused multiply-add instructions completed
 #endif
 } profiler_t;
 
