@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=blocking
+#SBATCH --job-name=block
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

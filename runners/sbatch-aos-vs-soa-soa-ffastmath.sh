@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=aos-vs-soa-soa-ffastmath
+#SBATCH --job-name=aos-soa-soa-ffastmath
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

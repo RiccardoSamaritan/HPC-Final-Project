@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=baseline
+#SBATCH --job-name=base
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

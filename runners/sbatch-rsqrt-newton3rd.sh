@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=rsqrt-newton3rd
+#SBATCH --job-name=rsqrt-n3rd
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

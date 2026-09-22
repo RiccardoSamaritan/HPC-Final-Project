@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=newton3rd
+#SBATCH --job-name=n3rd
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

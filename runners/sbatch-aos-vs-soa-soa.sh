@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=aos-vs-soa-soa
+#SBATCH --job-name=aos-soa-soa
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

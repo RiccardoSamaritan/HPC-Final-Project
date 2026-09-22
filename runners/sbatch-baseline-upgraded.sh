@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=baseline-upgraded
+#SBATCH --job-name=base-upg
 #SBATCH --partition=GENOA
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
