@@ -1,12 +1,5 @@
-"""
-Parser for the profiling files produced by runners/run-experiment.sh.
-
-Each experiment directory (data/raw/<variant>/) contains one profiling
-file per repetition (profile_run1.txt ... profile_runN.txt), each with a
-[config] section, a [one-time] section, and five per-step timing sections
-([total_step], [first_drift], [force], [kick], [second_drift]), one float
-per line, one line per simulation step.
-"""
+# Parses the profile_runN.txt files produced by runners/run-experiment.sh
+# and builds a speedup table relative to a baseline experiment.
 
 from __future__ import annotations
 
@@ -33,6 +26,11 @@ class RunData:
     writing_time: float
     initial_energy_time: float
     config: dict
+    # PAPI counters are None when the run wasn't built with USE_PAPI=1
+    papi_cycles: np.ndarray | None = None
+    papi_instructions: np.ndarray | None = None
+    papi_l1_dcm: np.ndarray | None = None
+    papi_l2_dcm: np.ndarray | None = None
 
 
 @dataclass
@@ -42,28 +40,33 @@ class Experiment:
     runs: list[RunData]
     n_runs: int
     n_steps: int
-    force_time_matrix: np.ndarray      # shape (n_runs, n_steps)
+    force_time_matrix: np.ndarray
     total_step_time_matrix: np.ndarray
-    # Force-time aggregate stats (this is the primary metric for speedup)
     mean_force_time: float
     std_force_time: float
     median_force_time: float
-    trimmed_mean_force_time: float     # 2nd-98th percentile trim, pooled across all runs*steps
+    trimmed_mean_force_time: float
     trimmed_std_force_time: float
     min_force_time: float
     max_force_time: float
     config: dict
     max_relative_energy_drift: float
-    speedup: float = 1.0                # set externally relative to a baseline
+    speedup: float = 1.0
     speedup_err: float = 0.0
+    # only set if every run in the experiment has PAPI data, otherwise None
+    mean_papi_cycles: float | None = None
+    mean_papi_instructions: float | None = None
+    mean_papi_l1_dcm: float | None = None
+    mean_papi_l2_dcm: float | None = None
+    ipc: float | None = None
 
 
-_SECTION_ARRAYS = ("total_step", "first_drift", "force", "kick", "second_drift")
+SECTION_NAMES = ("total_step", "first_drift", "force", "kick", "second_drift")
 
 
-def _parse_profile_file(path: str) -> dict:
-    """Parse one profile_run*.txt file into a dict of raw sections."""
-    sections: dict[str, list[str]] = {}
+def parse_profile_file(path):
+    # turns a profile_runN.txt into {section_name: [raw lines]}
+    sections = {}
     current = None
 
     with open(path) as f:
@@ -82,7 +85,7 @@ def _parse_profile_file(path: str) -> dict:
     return sections
 
 
-def _parse_config(lines: list[str]) -> dict:
+def parse_config(lines):
     config = {}
     for line in lines:
         key, _, value = line.partition("=")
@@ -95,7 +98,7 @@ def _parse_config(lines: list[str]) -> dict:
     return config
 
 
-def _parse_one_time(lines: list[str]) -> dict:
+def parse_one_time(lines):
     one_time = {}
     for line in lines:
         key, _, value = line.partition("=")
@@ -103,37 +106,53 @@ def _parse_one_time(lines: list[str]) -> dict:
     return one_time
 
 
-def _parse_run_file(path: str, run_idx: int) -> RunData:
-    sections = _parse_profile_file(path)
+def parse_array_section(lines):
+    return np.array([float(v) for v in lines], dtype=np.float64)
 
-    for required in ("config", "one-time") + _SECTION_ARRAYS:
+
+def parse_run_file(path, run_idx):
+    sections = parse_profile_file(path)
+
+    for required in ("config", "one-time") + SECTION_NAMES:
         if required not in sections:
             raise ValueError(f"{path}: missing required section [{required}]")
 
-    config = _parse_config(sections["config"])
-    one_time = _parse_one_time(sections["one-time"])
+    config = parse_config(sections["config"])
+    one_time = parse_one_time(sections["one-time"])
 
-    arrays = {
-        name: np.array([float(v) for v in sections[name]], dtype=np.float64)
-        for name in _SECTION_ARRAYS
-    }
+    force_time = parse_array_section(sections["force"])
+    total_step_time = parse_array_section(sections["total_step"])
+    first_drift_time = parse_array_section(sections["first_drift"])
+    kick_time = parse_array_section(sections["kick"])
+    second_drift_time = parse_array_section(sections["second_drift"])
+
+    # PAPI sections may simply not be there (older runs, non-PAPI builds)
+    papi_cycles = parse_array_section(sections["papi_cycles"]) if "papi_cycles" in sections else None
+    papi_instructions = parse_array_section(sections["papi_instructions"]) if "papi_instructions" in sections else None
+    papi_l1_dcm = parse_array_section(sections["papi_l1_dcm"]) if "papi_l1_dcm" in sections else None
+    papi_l2_dcm = parse_array_section(sections["papi_l2_dcm"]) if "papi_l2_dcm" in sections else None
 
     return RunData(
         run_idx=run_idx,
-        force_time=arrays["force"],
-        total_step_time=arrays["total_step"],
-        first_drift_time=arrays["first_drift"],
-        kick_time=arrays["kick"],
-        second_drift_time=arrays["second_drift"],
+        force_time=force_time,
+        total_step_time=total_step_time,
+        first_drift_time=first_drift_time,
+        kick_time=kick_time,
+        second_drift_time=second_drift_time,
         reading_time=one_time["reading_time"],
         writing_time=one_time["writing_time"],
         initial_energy_time=one_time["initial_energy_time"],
         config=config,
+        papi_cycles=papi_cycles,
+        papi_instructions=papi_instructions,
+        papi_l1_dcm=papi_l1_dcm,
+        papi_l2_dcm=papi_l2_dcm,
     )
 
 
-def _trimmed_stats(values: np.ndarray, low_pct: float = 2.0, high_pct: float = 98.0) -> tuple[float, float]:
-    """Mean and std of values within [low_pct, high_pct] percentiles."""
+def trimmed_stats(values, low_pct=2.0, high_pct=98.0):
+    # cut the extreme 2% on each side, since the force loop occasionally gets
+    # hit by OS scheduling noise and a plain mean/std would be skewed by it
     lo = np.percentile(values, low_pct)
     hi = np.percentile(values, high_pct)
     trimmed = values[(values >= lo) & (values <= hi)]
@@ -142,7 +161,17 @@ def _trimmed_stats(values: np.ndarray, low_pct: float = 2.0, high_pct: float = 9
     return float(np.mean(trimmed)), float(np.std(trimmed))
 
 
-def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
+def papi_mean_or_none(runs, field_name):
+    # only average the counter if every single run actually recorded it,
+    # otherwise we'd be averaging over fewer samples without saying so
+    values = [getattr(r, field_name) for r in runs]
+    for v in values:
+        if v is None:
+            return None
+    return float(np.mean(np.concatenate(values)))
+
+
+def parse_experiment(dir_path, name=None):
     if name is None:
         name = os.path.basename(os.path.normpath(dir_path))
 
@@ -150,9 +179,9 @@ def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
     if not run_files:
         raise ValueError(f"no profile_run*.txt files found in {dir_path}")
 
-    runs: list[RunData] = []
+    runs = []
     for run_idx, path in enumerate(run_files, start=1):
-        runs.append(_parse_run_file(path, run_idx))
+        runs.append(parse_run_file(path, run_idx))
 
     n_runs = len(runs)
     n_steps_per_run = {len(r.force_time) for r in runs}
@@ -165,6 +194,9 @@ def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
     force_time_matrix = np.stack([r.force_time for r in runs])
     total_step_time_matrix = np.stack([r.total_step_time for r in runs])
 
+    # all repetitions of the same experiment should reach the same energy
+    # drift (it's deterministic); if they don't, something's wrong with the
+    # run and we'd rather fail loudly than silently average bad data
     drifts = [r.config.get("max_relative_energy_drift") for r in runs]
     if not all(math.isclose(d, drifts[0], rel_tol=1e-6) for d in drifts):
         raise ValueError(
@@ -174,7 +206,16 @@ def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
     max_relative_energy_drift = drifts[0]
 
     pooled_force = force_time_matrix.reshape(-1)
-    trimmed_mean_force_time, trimmed_std_force_time = _trimmed_stats(pooled_force)
+    trimmed_mean_force_time, trimmed_std_force_time = trimmed_stats(pooled_force)
+
+    mean_papi_cycles = papi_mean_or_none(runs, "papi_cycles")
+    mean_papi_instructions = papi_mean_or_none(runs, "papi_instructions")
+    mean_papi_l1_dcm = papi_mean_or_none(runs, "papi_l1_dcm")
+    mean_papi_l2_dcm = papi_mean_or_none(runs, "papi_l2_dcm")
+
+    ipc = None
+    if mean_papi_cycles and mean_papi_instructions is not None:
+        ipc = mean_papi_instructions / mean_papi_cycles
 
     return Experiment(
         name=name,
@@ -193,14 +234,15 @@ def parse_experiment(dir_path: str, name: str | None = None) -> Experiment:
         max_force_time=float(np.max(pooled_force)),
         config=runs[0].config,
         max_relative_energy_drift=max_relative_energy_drift,
+        mean_papi_cycles=mean_papi_cycles,
+        mean_papi_instructions=mean_papi_instructions,
+        mean_papi_l1_dcm=mean_papi_l1_dcm,
+        mean_papi_l2_dcm=mean_papi_l2_dcm,
+        ipc=ipc,
     )
 
 
-def load_all_experiments(
-    dirs: list[str],
-    names: list[str] | None = None,
-    baseline_idx: int = 0,
-) -> list[Experiment]:
+def load_all_experiments(dirs, names=None, baseline_idx=0):
     if names is None:
         names = [None] * len(dirs)
 
@@ -208,9 +250,7 @@ def load_all_experiments(
 
     baseline = experiments[baseline_idx]
     t_base = baseline.trimmed_mean_force_time
-    rel_err_base = (
-        baseline.trimmed_std_force_time / t_base if t_base != 0 else 0.0
-    )
+    rel_err_base = baseline.trimmed_std_force_time / t_base if t_base != 0 else 0.0
 
     for exp in experiments:
         t_exp = exp.trimmed_mean_force_time
@@ -222,49 +262,59 @@ def load_all_experiments(
     return experiments
 
 
-def _status(exp: Experiment) -> str:
+def status(exp):
     tol = exp.config.get("energy_tolerance")
     return "OK" if (tol is not None and exp.max_relative_energy_drift <= tol) else "?"
 
 
-def _write_csv(experiments: list[Experiment], path: str) -> None:
+def fmt_or_na(value, fmt):
+    return "N/A" if value is None else format(value, fmt)
+
+
+def write_csv(experiments, path):
     with open(path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(
-            [
-                "name",
-                "trimmed_mean_force_time",
-                "std_force_time",
-                "speedup",
-                "speedup_err",
-                "max_relative_energy_drift",
-                "status",
-            ]
-        )
+        writer.writerow([
+            "name",
+            "trimmed_mean_force_time",
+            "std_force_time",
+            "speedup",
+            "speedup_err",
+            "max_relative_energy_drift",
+            "mean_papi_l1_dcm",
+            "mean_papi_l2_dcm",
+            "ipc",
+            "status",
+        ])
         for exp in experiments:
-            writer.writerow(
-                [
-                    exp.name,
-                    exp.trimmed_mean_force_time,
-                    exp.trimmed_std_force_time,
-                    exp.speedup,
-                    exp.speedup_err,
-                    exp.max_relative_energy_drift,
-                    _status(exp),
-                ]
-            )
+            writer.writerow([
+                exp.name,
+                exp.trimmed_mean_force_time,
+                exp.trimmed_std_force_time,
+                exp.speedup,
+                exp.speedup_err,
+                exp.max_relative_energy_drift,
+                fmt_or_na(exp.mean_papi_l1_dcm, ".6e"),
+                fmt_or_na(exp.mean_papi_l2_dcm, ".6e"),
+                fmt_or_na(exp.ipc, ".4f"),
+                status(exp),
+            ])
 
 
-def _write_markdown(experiments: list[Experiment], path: str) -> None:
+def write_markdown(experiments, path):
     lines = [
-        "| name | trimmed_mean_force_time (s) | std (s) | speedup | max_relative_energy_drift | status |",
-        "|---|---|---|---|---|---|",
+        "| name | trimmed_mean_force_time (s) | std (s) | speedup | max_relative_energy_drift | "
+        "mean_papi_l1_dcm | mean_papi_l2_dcm | ipc | status |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for exp in experiments:
         lines.append(
             f"| {exp.name} | {exp.trimmed_mean_force_time:.6e} | "
             f"{exp.trimmed_std_force_time:.3e} | {exp.speedup:.4f} ± {exp.speedup_err:.4f} | "
-            f"{exp.max_relative_energy_drift:.4e} | {_status(exp)} |"
+            f"{exp.max_relative_energy_drift:.4e} | "
+            f"{fmt_or_na(exp.mean_papi_l1_dcm, '.6e')} | "
+            f"{fmt_or_na(exp.mean_papi_l2_dcm, '.6e')} | "
+            f"{fmt_or_na(exp.ipc, '.4f')} | {status(exp)} |"
         )
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -286,7 +336,8 @@ if __name__ == "__main__":
 
     header = (
         f"{'name':<24} {'trimmed_mean_force(s)':>22} {'std(s)':>12} "
-        f"{'speedup':>10} {'speedup_err':>12} {'max_rel_drift':>14} {'status':>8}"
+        f"{'speedup':>10} {'speedup_err':>12} {'max_rel_drift':>14} "
+        f"{'l1_dcm':>14} {'l2_dcm':>14} {'ipc':>8} {'status':>8}"
     )
     print(header)
     print("-" * len(header))
@@ -294,10 +345,13 @@ if __name__ == "__main__":
         print(
             f"{exp.name:<24} {exp.trimmed_mean_force_time:>22.6e} "
             f"{exp.trimmed_std_force_time:>12.3e} {exp.speedup:>10.4f} "
-            f"{exp.speedup_err:>12.4f} {exp.max_relative_energy_drift:>14.4e} {_status(exp):>8}"
+            f"{exp.speedup_err:>12.4f} {exp.max_relative_energy_drift:>14.4e} "
+            f"{fmt_or_na(exp.mean_papi_l1_dcm, '.6e'):>14} "
+            f"{fmt_or_na(exp.mean_papi_l2_dcm, '.6e'):>14} "
+            f"{fmt_or_na(exp.ipc, '.4f'):>8} {status(exp):>8}"
         )
 
     if args.csv:
-        _write_csv(experiments, args.csv)
+        write_csv(experiments, args.csv)
     if args.markdown:
-        _write_markdown(experiments, args.markdown)
+        write_markdown(experiments, args.markdown)
