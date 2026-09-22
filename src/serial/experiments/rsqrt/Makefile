@@ -6,6 +6,9 @@ CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
 
+N_RSQRT_ITER ?= 1
+CFLAGS    += -DN_RSQRT_ITER=$(N_RSQRT_ITER)
+
 USE_PAPI  ?= 0
 ifeq ($(USE_PAPI),1)
 CFLAGS    += -DUSE_PAPI -I$(HOME)/local/papi/include
