@@ -89,6 +89,14 @@
  *
  * ... reason about the needed qualifiers to unleash compiler's optimization
  *
+ * Also branchless: the inner loop no longer skips j == i explicitly.  The
+ * softening term makes this safe, since at j == i, dx = dy = dz = 0, so
+ * r2 = eps2 (finite, positive — no division by zero) and the resulting
+ * contribution dx*s = dy*s = dz*s = 0 regardless of s, contributing exactly
+ * zero to the sum whether or not it is explicitly skipped.  Removing the
+ * branch lets the compiler treat every iteration uniformly, aiding
+ * auto-vectorization.
+ *
  */
 static void compute_accelerations_naive (size_t              n,          // number of particles
                                          dtype                g,          // gravitational constant
@@ -117,19 +125,16 @@ static void compute_accelerations_naive (size_t              n,          // numb
 
       for (j = 0u; j < n; ++j)
         {
-          if (j != i)
-            {
-              const dtype  dx   = x[j] - xi;
-              const dtype  dy   = y[j] - yi;
-              const dtype  dz   = z[j] - zi;
-              const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
-              const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
-              const dtype  s    = g * mass * invr * invr * invr;
+          const dtype  dx   = x[j] - xi;
+          const dtype  dy   = y[j] - yi;
+          const dtype  dz   = z[j] - zi;
+          const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
+          const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
+          const dtype  s    = g * mass * invr * invr * invr;
 
-              axi += dx * s;
-              ayi += dy * s;
-              azi += dz * s;
-            }
+          axi += dx * s;
+          ayi += dy * s;
+          azi += dz * s;
         }
 
       ax[i] = axi;
@@ -589,7 +594,7 @@ int main (int argc, char **argv)
         {
           profiler_config_t  config;
 
-          config.variant_name              = "baseline";
+          config.variant_name              = "baseline-upgraded";
           config.n_particles                = particles.n;
           config.n_steps                    = nsteps;
           config.dt                         = (double) dt;
