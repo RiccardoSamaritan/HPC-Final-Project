@@ -136,21 +136,19 @@ static void compute_accelerations_blocked (size_t              n,          // nu
               dtype        ayi = ay[i];
               dtype        azi = az[i];
 
+              // branchless: j == i contributes zero via the softening term
               for (j = jb; j < j_end; ++j)
                 {
-                  if (j != i)
-                    {
-                      const dtype  dx   = x[j] - xi;
-                      const dtype  dy   = y[j] - yi;
-                      const dtype  dz   = z[j] - zi;
-                      const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
-                      const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
-                      const dtype  s    = g * mass * invr * invr * invr;
+                  const dtype  dx   = x[j] - xi;
+                  const dtype  dy   = y[j] - yi;
+                  const dtype  dz   = z[j] - zi;
+                  const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
+                  const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
+                  const dtype  s    = g * mass * invr * invr * invr;
 
-                      axi += dx * s;
-                      ayi += dy * s;
-                      azi += dz * s;
-                    }
+                  axi += dx * s;
+                  ayi += dy * s;
+                  azi += dz * s;
                 }
 
               ax[i] = axi;

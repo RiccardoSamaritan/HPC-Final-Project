@@ -122,6 +122,7 @@ static inline dtype dtype_rsqrt (dtype x)
   return y;
 }
 
+// branchless: j == i contributes zero via the softening term, no need to skip it
 static void compute_accelerations_rsqrt (size_t              n,          // number of particles
                                          dtype                g,          // gravitational constant
                                          dtype                mass,       // mass of every source particle
@@ -149,19 +150,16 @@ static void compute_accelerations_rsqrt (size_t              n,          // numb
 
       for (j = 0u; j < n; ++j)
         {
-          if (j != i)
-            {
-              const dtype  dx   = x[j] - xi;
-              const dtype  dy   = y[j] - yi;
-              const dtype  dz   = z[j] - zi;
-              const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
-              const dtype  invr = dtype_rsqrt (r2);
-              const dtype  s    = g * mass * invr * invr * invr;
+          const dtype  dx   = x[j] - xi;
+          const dtype  dy   = y[j] - yi;
+          const dtype  dz   = z[j] - zi;
+          const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
+          const dtype  invr = dtype_rsqrt (r2);
+          const dtype  s    = g * mass * invr * invr * invr;
 
-              axi += dx * s;
-              ayi += dy * s;
-              azi += dz * s;
-            }
+          axi += dx * s;
+          ayi += dy * s;
+          azi += dz * s;
         }
 
       ax[i] = axi;
