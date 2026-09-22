@@ -10,11 +10,12 @@
 #SBATCH --error=log/%x_%j.err
 
 set -euo pipefail
+export LD_LIBRARY_PATH=$HOME/local/papi/lib:$LD_LIBRARY_PATH
 cd "$SLURM_SUBMIT_DIR"
 mkdir -p log
 
 cd src/serial/experiments/rsqrt-newton3rd
-make
+make USE_PAPI=1
 ./generate_ic --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k.bin"
 cd "$SLURM_SUBMIT_DIR"
 
