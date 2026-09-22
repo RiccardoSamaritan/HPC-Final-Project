@@ -30,6 +30,7 @@
  */
 
 #include "nbody_common.h"
+#include "profiling.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -585,18 +586,56 @@ static void kick (particles_t *p,       // particle velocities are modified in p
  *
  * This keeps positions and velocities synchronised at integer time levels 
  */
-static void leapfrog_dkd_step (particles_t *p,        // complete particle state, modified in place
-                               dtype        g,        // gravitational constant
-                               dtype        eps,      // softening length
-                               dtype        dt        // full time step
+static void leapfrog_dkd_step (particles_t *p,          // complete particle state, modified in place
+                               dtype        g,          // gravitational constant
+                               dtype        eps,        // softening length
+                               dtype        dt,         // full time step
+                               profiler_t  *profiler,   // optional per-phase timings, NULL to disable
+                               size_t       step_idx    // index into profiler's per-step arrays
 			       )
 {
-  drift (p, (dtype) 0.5 * dt);
-  compute_accelerations_naive (p->n, g, p->mass, eps,
-                               p->x, p->y, p->z,
-                               p->ax, p->ay, p->az);
-  kick (p, dt);
-  drift (p, (dtype) 0.5 * dt);
+  double  t0;
+  double  t1;
+
+  if (profiler != NULL)
+    {
+      t0 = get_time ();
+      drift (p, (dtype) 0.5 * dt);
+      t1 = get_time ();
+      profiler->first_drift_time[step_idx] = t1 - t0;
+      t0 = t1;
+
+#ifdef USE_PAPI
+      profiler_papi_start (profiler);
+#endif
+      compute_accelerations_naive (p->n, g, p->mass, eps,
+                                   p->x, p->y, p->z,
+                                   p->ax, p->ay, p->az);
+#ifdef USE_PAPI
+      profiler_papi_stop (profiler, step_idx);
+#endif
+      t1 = get_time ();
+      profiler->force_time[step_idx] = t1 - t0;
+      t0 = t1;
+
+      kick (p, dt);
+      t1 = get_time ();
+      profiler->kick_time[step_idx] = t1 - t0;
+      t0 = t1;
+
+      drift (p, (dtype) 0.5 * dt);
+      t1 = get_time ();
+      profiler->second_drift_time[step_idx] = t1 - t0;
+    }
+  else
+    {
+      drift (p, (dtype) 0.5 * dt);
+      compute_accelerations_naive (p->n, g, p->mass, eps,
+                                   p->x, p->y, p->z,
+                                   p->ax, p->ay, p->az);
+      kick (p, dt);
+      drift (p, (dtype) 0.5 * dt);
+    }
 }
 
 /*
@@ -714,6 +753,8 @@ static void print_usage (const char *program    // argv[0]
            "  --mass X                  particle mass (default: 1)\n"
            "  --energy-every N          diagnostic period in steps (default: 1)\n"
            "  --energy-tol X            warning tolerance for max relative drift (default: 1e-3)\n"
+           "  --profiler [0|1]          enable per-phase wall-clock profiling (default: 0)\n"
+           "  --profiler-path FILE      save profiling statistics to FILE (requires --profiler 1)\n"
            "  --quiet                   only print final summary\n"
            "  --help                    show this help message\n",
            program, NBODY_BINARY_VERSION_TEXT);
@@ -725,6 +766,8 @@ static void print_usage (const char *program    // argv[0]
 
 int main (int argc, char **argv)
 {
+  const double  t_program_start = get_time ();
+
   const char  *input_path    = NULL;
   const char  *output_path   = NULL;
   size_t       nsteps        = 10u;
@@ -735,7 +778,10 @@ int main (int argc, char **argv)
   dtype        mass          = (dtype) 1.0;
   dtype        energy_tol    = (dtype) 1.0e-3;
   bool         quiet         = false;
+  bool         profiler_on   = false;
+  const char  *profiler_path = NULL;
   particles_t  particles;
+  profiler_t   profiler;
   dtype        kinetic0;
   dtype        potential0;
   dtype        energy0;
@@ -770,6 +816,10 @@ int main (int argc, char **argv)
         mass = parse_dtype (value, "--mass");
       else if ((value = option_value (&argi, argc, argv, "--energy-tol")) != NULL)
         energy_tol = parse_dtype (value, "--energy-tol");
+      else if ((value = option_value (&argi, argc, argv, "--profiler")) != NULL)
+        profiler_on = (parse_size (value, "--profiler") != 0u);
+      else if ((value = option_value (&argi, argc, argv, "--profiler-path")) != NULL)
+        profiler_path = value;
       else if (strcmp (argv[argi], "--quiet") == 0)
         quiet = true;
       else if (strcmp (argv[argi], "--help") == 0)
@@ -804,12 +854,33 @@ int main (int argc, char **argv)
 
 
   // ························································
+  // set up profiling, if requested
+  if (profiler_on)
+    profiler_allocate (&profiler, nsteps);
+#ifdef USE_PAPI
+  if (profiler_on)
+    profiler_papi_init (&profiler);
+#endif
+
+  // ························································
   // read particles from input file
-  particles_read_binary (input_path, mass, &particles);
+  {
+    double  t0 = profiler_on ? get_time () : 0.0;
+
+    particles_read_binary (input_path, mass, &particles);
+    if (profiler_on)
+      profiler.reading_time = get_time () - t0;
+  }
 
   // ························································
   // get energy baseline
-  energy0 = total_energy (&particles, g, eps, &kinetic0, &potential0);
+  {
+    double  t0 = profiler_on ? get_time () : 0.0;
+
+    energy0 = total_energy (&particles, g, eps, &kinetic0, &potential0);
+    if (profiler_on)
+      profiler.initial_energy_time = get_time () - t0;
+  }
 
   if (!quiet)
     {
@@ -833,7 +904,13 @@ int main (int argc, char **argv)
   
   for (size_t step = 1u; step <= nsteps; ++step)
     {
-      leapfrog_dkd_step (&particles, g, eps, dt);
+      double  step_t0 = profiler_on ? get_time () : 0.0;
+
+      leapfrog_dkd_step (&particles, g, eps, dt,
+                         profiler_on ? &profiler : NULL, step - 1u);
+
+      if (profiler_on)
+        profiler.total_step_time[step - 1u] = get_time () - step_t0;
 
       // once in a while, get diagnostics
       //
@@ -854,11 +931,22 @@ int main (int argc, char **argv)
         }
     }
 
+#ifdef USE_PAPI
+  if (profiler_on)
+    profiler_papi_free (&profiler);
+#endif
+
   // ························································
   // write final file
 
   if (output_path != NULL)
-    particles_write_binary (output_path, &particles);
+    {
+      double  t0 = profiler_on ? get_time () : 0.0;
+
+      particles_write_binary (output_path, &particles);
+      if (profiler_on)
+        profiler.writing_time = get_time () - t0;
+    }
 
   // ························································
   // say good-bye
@@ -873,12 +961,42 @@ int main (int argc, char **argv)
              "try smaller --dt, larger --eps, or better initial conditions\n",
              max_rel_drift, (double) energy_tol);
 
-  
+
+  // ························································
+  // profiling report
+
+  if (profiler_on)
+    {
+      profiler.total_run_time = get_time () - t_program_start;
+
+      print_statistics (&profiler);
+
+      if (profiler_path != NULL)
+        {
+          profiler_config_t  config;
+
+          config.variant_name              = "baseline";
+          config.n_particles                = particles.n;
+          config.n_steps                    = nsteps;
+          config.dt                         = (double) dt;
+          config.eps                        = (double) eps;
+          config.g                          = (double) g;
+          config.mass                       = (double) mass;
+          config.max_relative_energy_drift = max_rel_drift;
+          config.energy_tolerance           = (double) energy_tol;
+
+          save_statistics (profiler_path, &config, &profiler);
+        }
+
+      profiler_free (&profiler);
+    }
+
+
   // ························································
   // don't leave garbage behind you
 
   particles_free (&particles);
 
-  
+
   return EXIT_SUCCESS;
 }

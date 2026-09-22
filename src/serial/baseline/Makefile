@@ -6,8 +6,15 @@ CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
 
+USE_PAPI  ?= 0
+ifeq ($(USE_PAPI),1)
+CFLAGS    += -DUSE_PAPI -I$(HOME)/local/papi/include
+LDLIBS    += -L$(HOME)/local/papi/lib -lpapi
+endif
+
 PROGRAMS := nbody_direct_serial generate_ic
-HEADERS  := nbody_common.h
+HEADERS  := nbody_common.h profiling.h
+PROFILING_SRCS := profiling.c
 
 ifeq ($(PRECISION),float)
 PRECISION_CPPFLAGS := -DNBODY_USE_FLOAT
@@ -21,8 +28,8 @@ endif
 
 all: $(PROGRAMS)
 
-nbody_direct_serial: nbody_direct_serial.c $(HEADERS)
-	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
+nbody_direct_serial: nbody_direct_serial.c $(HEADERS) $(PROFILING_SRCS)
+	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ nbody_direct_serial.c $(PROFILING_SRCS) $(LDLIBS)
 
 generate_ic: generate_ic.c $(HEADERS)
 	$(CC) $(STD) $(CPPFLAGS) $(PRECISION_CPPFLAGS) $(CFLAGS) -o $@ $< $(LDLIBS)
