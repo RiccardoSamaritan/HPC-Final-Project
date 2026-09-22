@@ -1,0 +1,27 @@
+# serial direct N-body DKD rsqrt
+# arithmetic_dtype=double binary_storage=float32 format=nbody-f32-v1
+# N=50000 nsteps=50 dt=0.0001 eps=0.050000000000000003 G=1 mass=1
+# step time kinetic potential total rel_energy_drift
+0 0 366701859.8791694 -732114869.15914667 -365413009.27997726 0
+50 0.0050000000000000001 362748994.20715791 -728150755.93972945 -365401761.73257154 3.0780369390466755e-05
+# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=3.0780369390466755e-05 tolerance=0.001 status=OK
+
+--- profiling report ---
+file read      : 1.342956e-03 s
+file write     : 0.000000e+00 s
+initial energy : 4.041831e+00 s
+total run      : 9.972604e+01 s
+
+--- per-step phases (50 steps) ---
+total step     median=1.835297e+00 s  trimmed_mean=1.834143e+00 s  std=3.979635e-03 s
+first drift    median=4.548550e-05 s  trimmed_mean=4.544475e-05 s  std=1.708785e-07 s
+force          median=1.835143e+00 s  trimmed_mean=1.833988e+00 s  std=3.981612e-03 s
+kick           median=6.331100e-05 s  trimmed_mean=6.339660e-05 s  std=1.138959e-06 s
+second drift   median=4.555550e-05 s  trimmed_mean=4.556092e-05 s  std=2.051383e-07 s
+
+--- PAPI hardware counters, force kernel (50 steps) ---
+cycles         median=7.855989e+09    trimmed_mean=7.851256e+09    std=1.770064e+07
+instructions   median=2.062745e+10    trimmed_mean=2.062745e+10    std=3.082106e+00
+L1 dcm         median=9.393548e+08    trimmed_mean=9.393355e+08    std=6.838339e+04
+L2 dcm         median=2.301784e+07    trimmed_mean=2.296180e+07    std=2.078600e+05
+IPC            : 2.630411e+00
