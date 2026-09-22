@@ -22,6 +22,7 @@
 #include "utils.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -417,42 +418,42 @@ static int verify_sanity ( const size_t  n,               // number of particles
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (x[i]) || (fabs (x[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu x component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " x component cannot be stored as a finite float", failures );
     return 1; }
   
   failures = 0;
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (y[i]) || (fabs (y[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu y component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " y component cannot be stored as a finite float", failures );
     return 1; }
 
   failures = 0;
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (z[i]) || (fabs (z[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu z component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " z component cannot be stored as a finite float", failures );
     return 1; }
 
   failures = 0;
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (vx[i]) || (fabs (vx[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu vx component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " vx component cannot be stored as a finite float", failures );
     return 1; }
 
   failures = 0;
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (vy[i]) || (fabs (vy[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu vy component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " vy component cannot be stored as a finite float", failures );
     return 1; }
 
   failures = 0;
   for (size_t i = 0u; i < n; ++i)
     failures += (!isfinite (vz[i]) || (fabs (vz[i]) > DTYPE_MAX_VALUE));
   if ( failures ) {
-    printf ( "%zu vz component cannot be stored as a finite float", failures );
+    printf ( "%" PRIu64 " vz component cannot be stored as a finite float", failures );
     return 1; }
 
   return 0;
