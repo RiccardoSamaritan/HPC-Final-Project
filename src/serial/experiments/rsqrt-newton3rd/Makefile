@@ -9,6 +9,12 @@ PRECISION ?= double
 N_RSQRT_ITER ?= 1
 CFLAGS    += -DN_RSQRT_ITER=$(N_RSQRT_ITER)
 
+USE_PAPI  ?= 0
+ifeq ($(USE_PAPI),1)
+CFLAGS    += -DUSE_PAPI -I$(HOME)/local/papi/include
+LDLIBS    += -L$(HOME)/local/papi/lib -lpapi
+endif
+
 COMMON_DIR := ../../../common
 
 PROGRAMS := nbody_direct_serial generate_ic
