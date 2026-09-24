@@ -3,25 +3,25 @@
 # N=50000 nsteps=50 dt=0.0001 eps=0.050000000000000003 G=1 mass=1
 # step time kinetic potential total rel_energy_drift
 0 0 366701859.8791694 -732114869.15914667 -365413009.27997726 0
-50 0.0050000000000000001 362748994.20715791 -728150755.93972945 -365401761.73257154 3.0780369390466755e-05
-# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=3.0780369390466755e-05 tolerance=0.001 status=OK
+50 0.0050000000000000001 362748994.20715791 -728150755.93972945 -365401761.73257154 0
+# final: N=50000 steps=50 arithmetic_dtype=double max_relative_energy_drift=0 tolerance=0.001 status=OK
 
 --- profiling report ---
-file read      : 1.342956e-03 s
+file read      : 1.523777e-03 s
 file write     : 0.000000e+00 s
-initial energy : 4.041831e+00 s
-total run      : 9.972604e+01 s
+initial energy : 4.029873e+00 s
+total run      : 5.846931e+01 s
 
 --- per-step phases (50 steps) ---
-total step     median=1.835297e+00 s  trimmed_mean=1.834143e+00 s  std=3.979635e-03 s
-first drift    median=4.548550e-05 s  trimmed_mean=4.544475e-05 s  std=1.708785e-07 s
-force          median=1.835143e+00 s  trimmed_mean=1.833988e+00 s  std=3.981612e-03 s
-kick           median=6.331100e-05 s  trimmed_mean=6.339660e-05 s  std=1.138959e-06 s
-second drift   median=4.555550e-05 s  trimmed_mean=4.556092e-05 s  std=2.051383e-07 s
+total step     median=1.007849e+00 s  trimmed_mean=1.007861e+00 s  std=5.114914e-05 s
+first drift    median=4.359550e-05 s  trimmed_mean=4.365353e-05 s  std=6.860695e-07 s
+force          median=1.007695e+00 s  trimmed_mean=1.007707e+00 s  std=5.170978e-05 s
+kick           median=6.587051e-05 s  trimmed_mean=6.588005e-05 s  std=4.669943e-07 s
+second drift   median=4.326600e-05 s  trimmed_mean=4.326760e-05 s  std=1.789744e-07 s
 
 --- PAPI hardware counters, force kernel (50 steps) ---
-cycles         median=7.855989e+09    trimmed_mean=7.851256e+09    std=1.770064e+07
-instructions   median=2.062745e+10    trimmed_mean=2.062745e+10    std=3.082106e+00
-L1 dcm         median=9.393548e+08    trimmed_mean=9.393355e+08    std=6.838339e+04
-L2 dcm         median=2.301784e+07    trimmed_mean=2.296180e+07    std=2.078600e+05
-IPC            : 2.630411e+00
+cycles         median=4.310621e+09    trimmed_mean=4.310616e+09    std=3.658205e+04
+instructions   median=8.125089e+09    trimmed_mean=8.125089e+09    std=1.551529e+01
+L1 dcm         median=1.174095e+08    trimmed_mean=1.174096e+08    std=5.264797e+02
+L2 dcm         median=1.853794e+06    trimmed_mean=1.854289e+06    std=3.611008e+03
+IPC            : 1.884901e+00
