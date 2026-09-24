@@ -316,19 +316,16 @@ static void compute_accelerations_naive (size_t              n,          // numb
 
       for (j = 0u; j < n; ++j)
         {
-          if (j != i)
-            {
-              const dtype  dx   = x[j] - xi;
-              const dtype  dy   = y[j] - yi;
-              const dtype  dz   = z[j] - zi;
-              const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
-              const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
-              const dtype  s    = g * mass * invr * invr * invr;
+          const dtype  dx   = x[j] - xi;
+          const dtype  dy   = y[j] - yi;
+          const dtype  dz   = z[j] - zi;
+          const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
+          const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
+          const dtype  s    = g * mass * invr * invr * invr;
 
-              axi += dx * s;
-              ayi += dy * s;
-              azi += dz * s;
-            }
+          axi += dx * s;
+          ayi += dy * s;
+          azi += dz * s;
         }
 
       ax[i] = axi;
@@ -563,19 +560,16 @@ static void compute_accelerations_naive_aos (size_t       n,      // number of p
 
       for (j = 0u; j < n; ++j)
         {
-          if (j != i)
-            {
-              const dtype  dx   = item[j].x - xi;
-              const dtype  dy   = item[j].y - yi;
-              const dtype  dz   = item[j].z - zi;
-              const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
-              const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
-              const dtype  s    = g * mass * invr * invr * invr;
+          const dtype  dx   = item[j].x - xi;
+          const dtype  dy   = item[j].y - yi;
+          const dtype  dz   = item[j].z - zi;
+          const dtype  r2   = dx * dx + dy * dy + dz * dz + eps2;
+          const dtype  invr = (dtype) 1.0 / dtype_sqrt (r2);
+          const dtype  s    = g * mass * invr * invr * invr;
 
-              axi += dx * s;
-              ayi += dy * s;
-              azi += dz * s;
-            }
+          axi += dx * s;
+          ayi += dy * s;
+          azi += dz * s;
         }
 
       item[i].ax = axi;

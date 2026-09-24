@@ -57,6 +57,7 @@ dkms.conf
 TODO.md
 *.bin
 src/serial/**/nbody_direct_serial
+src/serial/**/nbody_direct_serial_*
 src/serial/**/generate_ic
 src/serial/**/*.o
 log/*.err
