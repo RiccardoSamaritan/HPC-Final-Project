@@ -42,6 +42,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef N_RSQRT_ITER
+#define N_RSQRT_ITER 1
+#endif
+
 /* ========================================================================================
 
    : ------------------------------------------------------ :
@@ -121,7 +125,11 @@ static inline dtype dtype_rsqrt_approx (dtype x)
 static inline dtype dtype_rsqrt (dtype x)
 {
   dtype y = dtype_rsqrt_approx (x);
-  y = y * ((dtype) 1.5 - (dtype) 0.5 * x * y * y);
+
+  // N_RSQRT_ITER Newton-Raphson refinement steps, set at compile time
+  for (int i = 0; i < N_RSQRT_ITER; i++)
+    y = y * ((dtype) 1.5 - (dtype) 0.5 * x * y * y);
+
   return y;
 }
 

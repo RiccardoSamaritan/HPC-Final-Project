@@ -6,6 +6,9 @@ CFLAGS    += -D_POSIX_C_SOURCE=199309L
 LDLIBS    ?= -lm
 PRECISION ?= double
 
+N_RSQRT_ITER ?= 1
+CFLAGS    += -DN_RSQRT_ITER=$(N_RSQRT_ITER)
+
 COMMON_DIR := ../../../common
 
 PROGRAMS := nbody_direct_serial generate_ic
