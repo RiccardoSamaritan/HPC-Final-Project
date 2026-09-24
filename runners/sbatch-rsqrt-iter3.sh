@@ -15,6 +15,7 @@ cd "$SLURM_SUBMIT_DIR"
 mkdir -p log
 
 cd src/serial/experiments/rsqrt
+make clean
 make USE_PAPI=1 N_RSQRT_ITER=3
 ./generate_ic --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k.bin"
 cd "$SLURM_SUBMIT_DIR"

@@ -14,6 +14,7 @@ cd "$SLURM_SUBMIT_DIR"
 mkdir -p log
 
 cd src/serial/baseline
+make clean
 make
 ./generate_ic --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k.bin"
 cd "$SLURM_SUBMIT_DIR"
