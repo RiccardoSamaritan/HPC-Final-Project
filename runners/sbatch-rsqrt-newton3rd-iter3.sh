@@ -17,13 +17,11 @@ mkdir -p log
 cd src/serial/experiments/rsqrt-newton3rd
 make clean
 make USE_PAPI=1 N_RSQRT_ITER=3
-mv nbody_direct_serial nbody_direct_serial_iter3
-mv generate_ic generate_ic_iter3
-./generate_ic_iter3 --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k_iter3.bin"
+./generate_ic --model 0 --n 50000 --seed 42 --output "$SLURM_SUBMIT_DIR/plummer_50k.bin"
 cd "$SLURM_SUBMIT_DIR"
 
 ./runners/run-experiment.sh \
-    src/serial/experiments/rsqrt-newton3rd/nbody_direct_serial_iter3 \
+    src/serial/experiments/rsqrt-newton3rd/nbody_direct_serial \
     rsqrt-newton3rd-iter3 \
-    plummer_50k_iter3.bin \
+    plummer_50k.bin \
     --nsteps 50 --dt 1e-4 --eps 0.05 --mass 1.0

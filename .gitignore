@@ -59,6 +59,5 @@ TODO.md
 src/serial/**/nbody_direct_serial
 src/serial/**/nbody_direct_serial_*
 src/serial/**/generate_ic
-src/serial/**/generate_ic_*
 src/serial/**/*.o
 log/*.err
